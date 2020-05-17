@@ -17,18 +17,26 @@ namespace Hack
 		bool bOneHitKills = false;
 		bool bInfiniteHealth = false;
 		bool bInfiniteArmor = false;
+		bool bNoAmmoDecrease = false;
 		bool bCustomCrosshair = false;
+		bool bShowNameColor = false;
+		bool bShowSnaplineColor = false;
+		bool bShowCrosshairSettings = false;
 		float flEspRange = 750;
 		DrawColor SnaplineColor = { 255, 0, 0, 255 };
 		DrawColor NameColor = { 255, 125, 0, 255 };
-		Crosshair crosshair = { { 0, 0 }, { 125, 255, 0, 255 }, 1, 1, 10 };
+		Crosshair crosshair = { { 0, 0 }, { 125, 255, 0, 255 }, 1, 2, 10 };
 		Window wnd;
+		ImFont* imgui_font;
 
 		//Game Data
 		mem_t client;
 		mem_t engine;
 		mem_t server;
 		mem_t fDecreaseHealthAddr;
+		mem_t fDecreaseAmmoAddr;
+		mem_t fDecreaseAmmoShotgunAddr;
+		mem_t fDecreaseAmmoOthersAddr;
 		bool* CheckPlayerState;
 		HLEntity* LocalPlayer;
 		HLEntity* Entity;
@@ -42,12 +50,14 @@ namespace Hack
 	}
 }
 
-mem_t healthOffset = HLS::Offsets::Server::Entity::dwHealth;
-mem_t typeIdOffset = HLS::Offsets::Server::Entity::dwEntityTypeId;
 mem_t DecHealthJumpAddr;
+mem_t DecAmmoJumpAddr;
+mem_t DecAmmoShotgunJumpAddr;
+mem_t DecAmmoOthersJumpAddr;
 
 void Hack::DrawMenu()
 {
+	/*
 	ImGui::Begin("HL:S Multihack by rdbo");
 	ImGui::Checkbox("Bunnyhop", &Data::bBunnyhop);
 	ImGui::Checkbox("ESP Snaplines", &Data::bEspSnaplines);
@@ -72,8 +82,12 @@ void Hack::DrawMenu()
 	{
 		Hack::HookDecreaseHealth();
 	}
-	ImGui::SliderFloat("ESP Range: ", &Data::flEspRange, 100, 2000, "%1.f");
+	if (ImGui::Checkbox("No Ammo Decrease", &Data::bNoAmmoDecrease))
+	{
+		Hack::HookDecreaseAmmo();
+	}
 	ImGui::Checkbox("Enable Entity Filter", &Data::bEnableEntityFilter);
+	ImGui::SliderFloat("ESP Range: ", &Data::flEspRange, MIN_ESP_RANGE, MAX_ESP_RANGE, "%1.f");
 	ImGui::Separator();
 	ImGui::SliderInt("ESP Snapline R", &Data::SnaplineColor.r, 0, 255);
 	ImGui::SliderInt("ESP Snapline G", &Data::SnaplineColor.g, 0, 255);
@@ -85,6 +99,79 @@ void Hack::DrawMenu()
 	ImGui::SliderInt("ESP Name B", &Data::NameColor.b, 0, 255);
 	ImGui::SliderInt("ESP Name A", &Data::NameColor.a, 0, 255);
 	ImGui::End();
+	*/
+
+	ImGui::BeginMainMenuBar();
+	if (ImGui::BeginMenu("ESP"))
+	{
+		ImGui::Checkbox("ESP Snaplines", &Data::bEspSnaplines);
+		ImGui::Checkbox("ESP Name", &Data::bEspName);
+		ImGui::Checkbox("Enable Entity Filter", &Data::bEnableEntityFilter);
+		ImGui::Checkbox("ESP Limited Range", &Data::bEspLimitedRange);
+		if (Data::bEspLimitedRange)
+		{
+			ImGui::SliderFloat("ESP Range", &Data::flEspRange, MIN_ESP_RANGE, MAX_ESP_RANGE, "%1.f");
+		}
+
+		ImGui::Checkbox("Show Snapline Color Properties", &Data::bShowSnaplineColor);
+		if (Data::bShowSnaplineColor)
+		{
+			ImGui::SliderInt("ESP Snapline R", &Data::SnaplineColor.r, 0, 255);
+			ImGui::SliderInt("ESP Snapline G", &Data::SnaplineColor.g, 0, 255);
+			ImGui::SliderInt("ESP Snapline B", &Data::SnaplineColor.b, 0, 255);
+			ImGui::SliderInt("ESP Snapline A", &Data::SnaplineColor.a, 0, 255);
+		}
+
+		ImGui::Checkbox("Show Name Color Properties", &Data::bShowNameColor);
+		if (Data::bShowNameColor)
+		{
+			ImGui::SliderInt("ESP Name R", &Data::NameColor.r, 0, 255);
+			ImGui::SliderInt("ESP Name G", &Data::NameColor.g, 0, 255);
+			ImGui::SliderInt("ESP Name B", &Data::NameColor.b, 0, 255);
+			ImGui::SliderInt("ESP Name A", &Data::NameColor.a, 0, 255);
+		}
+		ImGui::EndMenu();
+	}
+
+	if (ImGui::BeginMenu("CROSSHAIR"))
+	{
+		ImGui::Checkbox("Enable Custom Crosshair", &Data::bCustomCrosshair);
+		ImGui::Checkbox("Show Crosshair Properties", &Data::bShowCrosshairSettings);
+		if (Data::bShowCrosshairSettings)
+		{
+			ImGui::SliderInt("Crosshair Thickness", &Data::crosshair.Thickness, 0, Data::wnd.GetWidth());
+			ImGui::SliderInt("Crosshair Size", &Data::crosshair.Size, 0, Data::wnd.GetWidth());
+			ImGui::SliderInt("Crosshair Gap", &Data::crosshair.Gap, 0, Data::wnd.GetWidth());
+			ImGui::SliderInt("Crosshair R", &Data::crosshair.Color.r, 0, 255);
+			ImGui::SliderInt("Crosshair G", &Data::crosshair.Color.g, 0, 255);
+			ImGui::SliderInt("Crosshair B", &Data::crosshair.Color.b, 0, 255);
+			ImGui::SliderInt("Crosshair A", &Data::crosshair.Color.a, 0, 255);
+		}
+		ImGui::EndMenu();
+	}
+
+	if (ImGui::BeginMenu("CHEATS"))
+	{
+		ImGui::Checkbox("Bunnyhop", &Data::bBunnyhop);
+		ImGui::Checkbox("Infinite Health", &Data::bInfiniteHealth);
+		ImGui::Checkbox("Infinite Armor", &Data::bInfiniteArmor);
+		if (ImGui::Checkbox("Godmode", &Data::bGodmode))
+		{
+			Hack::HookDecreaseHealth();
+		}
+
+		if (ImGui::Checkbox("One Hit Kills", &Data::bOneHitKills))
+		{
+			Hack::HookDecreaseHealth();
+		}
+		if (ImGui::Checkbox("No Ammo Decrease", &Data::bNoAmmoDecrease))
+		{
+			Hack::HookDecreaseAmmo();
+		}
+
+		ImGui::EndMenu();
+	}
+	ImGui::EndMainMenuBar();
 }
 
 void Hack::Run(LPDIRECT3DDEVICE9 pDevice)
@@ -99,7 +186,13 @@ void Hack::Run(LPDIRECT3DDEVICE9 pDevice)
 		Data::CheckPlayerState = (bool*)(Data::client + HLS::Offsets::Client::bCheckPlayerState);
 		Data::EnableCrosshair = (DWORD*)(Data::client + HLS::Offsets::Client::bEnableCrosshair);
 		Data::fDecreaseHealthAddr = (Data::server + HLS::Offsets::Server::fDecreaseHealth);
+		Data::fDecreaseAmmoAddr = (Data::server + HLS::Offsets::Server::fDecreaseAmmo);
+		Data::fDecreaseAmmoShotgunAddr = (Data::server + HLS::Offsets::Server::fDecreaseAmmoShotgun);
+		Data::fDecreaseAmmoOthersAddr = (Data::server + HLS::Offsets::Server::fDecreaseAmmoOthers);
 		DecHealthJumpAddr = Data::fDecreaseHealthAddr + DECREASE_HEALTH_HOOK_LENGTH;
+		DecAmmoJumpAddr = Data::fDecreaseAmmoAddr + DECREASE_AMMO_HOOK_LENGTH;
+		DecAmmoShotgunJumpAddr = Data::fDecreaseAmmoShotgunAddr + DECREASE_AMMO_SHOTGUN_HOOK_LENGTH;
+		DecAmmoOthersJumpAddr = Data::fDecreaseAmmoOthersAddr + DECREASE_AMMO_OTHERS_HOOK_LENGTH;
 		D3DXCreateFont(pDevice, FONT_SIZE, 0, FW_REGULAR, 0, FALSE, DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, DEFAULT_QUALITY, DEFAULT_PITCH | FF_DONTCARE, FONT_NAME, &D3D9::dxFont);
 		Data::bInitialized = true;
 	}
@@ -108,8 +201,9 @@ void Hack::Run(LPDIRECT3DDEVICE9 pDevice)
 	Data::crosshair.Position.x = Data::wnd.left + Data::wnd.GetWidth() / 2;
 	Data::crosshair.Position.y = Data::wnd.top + Data::wnd.GetHeight() / 2;
 
+	if (!*Data::CheckPlayerState) return;
 	Data::LocalPlayer = *(HLEntity**)(Data::server + HLS::Offsets::Server::dwLocalPlayer);
-	if (!*Data::CheckPlayerState || !Data::LocalPlayer) return;
+	if (!Data::LocalPlayer) return;
 
 	InfiniteHealth();
 	InfiniteArmor();
@@ -137,6 +231,7 @@ void Hack::Run(LPDIRECT3DDEVICE9 pDevice)
 			}
 		}
 	}
+	int a;
 }
 
 void Hack::DrawCrosshair(Crosshair xhair, LPDIRECT3DDEVICE9 pDevice)
@@ -224,6 +319,69 @@ void Hack::HookDecreaseHealth()
 		Memory::In::Hook::Detour((byte_t*)Data::fDecreaseHealthAddr, (byte_t*)Hack::hkDecreaseHealth, DECREASE_HEALTH_HOOK_LENGTH);
 	else
 		Memory::In::Hook::Restore(Data::fDecreaseHealthAddr);
+}
+
+void Hack::HookDecreaseAmmo()
+{
+	if (Data::bNoAmmoDecrease && Data::fDecreaseAmmoAddr && Data::fDecreaseAmmoShotgunAddr && Data::fDecreaseAmmoOthersAddr)
+	{
+		Memory::In::Hook::Detour((byte_t*)Data::fDecreaseAmmoAddr, (byte_t*)Hack::hkDecreaseAmmo, DECREASE_AMMO_HOOK_LENGTH);
+		Memory::In::Hook::Detour((byte_t*)Data::fDecreaseAmmoShotgunAddr, (byte_t*)Hack::hkDecreaseAmmoShotgun, DECREASE_AMMO_SHOTGUN_HOOK_LENGTH);
+		Memory::In::Hook::Detour((byte_t*)Data::fDecreaseAmmoOthersAddr, (byte_t*)Hack::hkDecreaseAmmoOthers, DECREASE_AMMO_OTHERS_HOOK_LENGTH);
+	}
+}
+
+__declspec(naked)
+void Hack::hkDecreaseAmmo()
+{
+	__asm
+	{
+		mov ebx, MAX_VALUE
+		jmp originalcode
+
+		originalcode:
+		mov[esi], ebx
+		mov eax, edi
+		pop edi
+
+		jmp DecAmmoJumpAddr
+	}
+}
+
+__declspec(naked)
+void Hack::hkDecreaseAmmoShotgun()
+{
+	__asm
+	{
+		mov edi, MAX_VALUE
+		jmp originalcode
+
+		originalcode:
+		mov[esi], edi
+		pop edi
+		mov eax, esi
+
+		exit:
+		jmp DecAmmoShotgunJumpAddr
+	}
+}
+
+__declspec(naked)
+void Hack::hkDecreaseAmmoOthers()
+{
+	__asm
+	{
+		mov ebx, MAX_VALUE
+
+		originalcode:
+		mov[esi], ebx
+		pop edi
+		pop esi
+		pop ebx
+
+		exit:
+		jmp DecAmmoOthersJumpAddr
+	}
 }
 
 bool Hack::FilterEntity(HLEntity* ent)

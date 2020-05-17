@@ -15,12 +15,18 @@
 #define ENGINE_MODULE AUTO_STR("engine.dll")
 #define SERVER_MODULE AUTO_STR("server.dll")
 #define FONT_NAME AUTO_STR("Consolas")
+#define CFONT_NAME "Consolas"
 #define FONT_SIZE 14
 #define MAX_ENTITIES 1024
 #define BLACKLISTED_ENTITIES (char*)"monster_cockroach"
 #define LOCALPLAYER_TYPE_ID 5
 #define DECREASE_HEALTH_HOOK_LENGTH 8
-#define MAX_VALUE 0x100
+#define DECREASE_AMMO_HOOK_LENGTH 5
+#define DECREASE_AMMO_SHOTGUN_HOOK_LENGTH 5
+#define DECREASE_AMMO_OTHERS_HOOK_LENGTH 5
+#define MIN_ESP_RANGE 100
+#define MAX_ESP_RANGE 2500
+#define MAX_VALUE 0x64
 
 namespace HLS
 {
@@ -49,6 +55,10 @@ namespace HLS
 			const mem_t dwEntityList = 0x4B0FB4;
 			const mem_t dwLocalPlayer = 0x4B0FC4;
 			const mem_t fDecreaseHealth = 0xCC639;
+			const mem_t fDecreaseAmmo = 0x2BA639;
+			const mem_t fDecreaseAmmoShotgun = 0xC82EA;
+			const mem_t fDecreaseAmmoOthers = 0xD0EC4;
+
 
 			namespace Entity
 			{
@@ -105,11 +115,15 @@ namespace Hack
 	void Run(LPDIRECT3DDEVICE9 pDevice);
 	void DrawMenu();
 	void hkDecreaseHealth();
+	void hkDecreaseAmmo();
+	void hkDecreaseAmmoShotgun();
+	void hkDecreaseAmmoOthers();
 
 	void ESP_Snaplines(HLEntity* ent, iVec2 Ent2DPos, LPDIRECT3DDEVICE9 pDevice, Window wnd);
 	void ESP_Name(HLEntity* ent, iVec2 Ent2DPos, LPDIRECT3DDEVICE9 pDevice);
 	bool FilterEntity(HLEntity* ent);
 	void HookDecreaseHealth();
+	void HookDecreaseAmmo();
 	void Bunnyhop();
 	void InfiniteHealth();
 	void InfiniteArmor();
@@ -128,18 +142,26 @@ namespace Hack
 		extern bool bOneHitKills;
 		extern bool bInfiniteHealth;
 		extern bool bInfiniteArmor;
+		extern bool bNoAmmoDecrease;
 		extern float flEspRange;
 		extern bool bCustomCrosshair;
+		extern bool bShowNameColor;
+		extern bool bShowSnaplineColor;
+		extern bool bShowCrosshairSettings;
 		extern DrawColor SnaplineColor;
 		extern DrawColor NameColor;
 		extern Crosshair crosshair;
 		extern Window wnd;
+		extern ImFont* imgui_font;
 
 		//Game
 		extern mem_t client;
 		extern mem_t engine;
 		extern mem_t server;
 		extern mem_t fDecreaseHealthAddr;
+		extern mem_t fDecreaseAmmoAddr;
+		extern mem_t fDecreaseAmmoShotgunAddr;
+		extern mem_t fDecreaseAmmoOthersAddr;
 		extern HLEntity* LocalPlayer;
 		extern HLEntity* Entity;
 		extern bool* CheckPlayerState;

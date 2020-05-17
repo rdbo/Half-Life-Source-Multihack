@@ -204,6 +204,7 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="colors.h" />
     <ClInclude Include="d3d9.h" />
     <ClInclude Include="hack.h" />
     <ClInclude Include="hook.h" />

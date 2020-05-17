@@ -13,6 +13,10 @@
 #define WNDPROC_INDEX GWLP_WNDPROC
 #endif
 
+#define IMGUI_WINDOW_W 500
+#define IMGUI_WINDOW_H 350
+#define IMGUI_FONT_SIZE 18
+
 #define RELEASE_D3D 1
 
 struct iVec2
