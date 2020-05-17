@@ -2,12 +2,6 @@
 #include "pch.h"
 #include "d3d9.h"
 
-#if defined(UCS)
-#define AUTO_STR(str) L##str
-#elif defined(MBCS)
-#define AUTO_STR(str) str
-#endif
-
 #define KEY_MENU VK_INSERT
 #define KEY_BHOP VK_SPACE
 
@@ -24,6 +18,9 @@
 #define DECREASE_AMMO_HOOK_LENGTH 5
 #define DECREASE_AMMO_SHOTGUN_HOOK_LENGTH 5
 #define DECREASE_AMMO_OTHERS_HOOK_LENGTH 5
+#define RELOAD_INCREASE_CLIP_AMMO_HOOK_LENGTH 5
+#define RELOAD_INCREASE_CLIP_AMMO_SHOTGUN_HOOK_LENGTH 6
+#define RELOAD_DECREASE_AMMO_HOOK_LENGTH 6
 #define MIN_ESP_RANGE 100
 #define MAX_ESP_RANGE 2500
 #define MAX_VALUE 0x64
@@ -48,6 +45,7 @@ namespace HLS
 		namespace Engine
 		{
 			const mem_t dwViewMatrix = 0x58B4F0;
+			const mem_t bLoading = 0x58BFFC;
 		}
 
 		namespace Server
@@ -58,7 +56,9 @@ namespace HLS
 			const mem_t fDecreaseAmmo = 0x2BA639;
 			const mem_t fDecreaseAmmoShotgun = 0xC82EA;
 			const mem_t fDecreaseAmmoOthers = 0xD0EC4;
-
+			const mem_t fReloadIncreaseClipAmmo = 0xD383A;
+			const mem_t fReloadIncreaseClipAmmoShotgun = 0x2C6D18;
+			const mem_t fReloadDecreaseAmmo = 0xD0EC4;
 
 			namespace Entity
 			{
@@ -118,6 +118,9 @@ namespace Hack
 	void hkDecreaseAmmo();
 	void hkDecreaseAmmoShotgun();
 	void hkDecreaseAmmoOthers();
+	void hkReloadIncreaseClipAmmo();
+	void hkReloadIncreaseClipAmmoShotgun();
+	void hkReloadDecreaseAmmo();
 
 	void ESP_Snaplines(HLEntity* ent, iVec2 Ent2DPos, LPDIRECT3DDEVICE9 pDevice, Window wnd);
 	void ESP_Name(HLEntity* ent, iVec2 Ent2DPos, LPDIRECT3DDEVICE9 pDevice);
@@ -162,9 +165,13 @@ namespace Hack
 		extern mem_t fDecreaseAmmoAddr;
 		extern mem_t fDecreaseAmmoShotgunAddr;
 		extern mem_t fDecreaseAmmoOthersAddr;
+		extern mem_t fReloadIncreaseClipAmmoAddr;
+		extern mem_t fReloadIncreaseClipAmmoShotgunAddr;
+		extern mem_t fReloadDecreaseAmmo;
 		extern HLEntity* LocalPlayer;
 		extern HLEntity* Entity;
 		extern bool* CheckPlayerState;
+		extern bool* Loading;
 		extern mem_t EntityList;
 		extern std::vector<char*> EntityStringFilter;
 		extern UINT KeyHook[0xFE];
