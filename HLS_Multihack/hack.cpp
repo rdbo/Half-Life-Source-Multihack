@@ -9,6 +9,7 @@ namespace Hack
 		bool bInitialized = false;
 		bool bShowMenu = false;
 		bool bBunnyhop = false;
+		bool bTriggerbot = false;
 		bool bEspSnaplines = false;
 		bool bEspName = false;
 		bool bEspLimitedRange = false;
@@ -20,11 +21,15 @@ namespace Hack
 		bool bInfiniteArmor = false;
 		bool bNoAmmoDecrease = false;
 		bool bCustomCrosshair = false;
+		bool bTeleport = false;
+		bool bTeleportPending = false;
 		bool bShowNameColor = false;
 		bool bShowSnaplineColor = false;
 		bool bShowCrosshairSettings = false;
 		bool bFovChanger = false;
+		bool bServerCheats = false;
 		int iNewFov = DEFAULT_FOV;
+		flVec3 vTeleportPos = { 0, 0, 0 };
 		float flEspRange = 750;
 		DrawColor SnaplineColor = { 255, 0, 0, 255 };
 		DrawColor NameColor = { 255, 125, 0, 255 };
@@ -53,7 +58,9 @@ namespace Hack
 		ViewMatrix vMatrix;
 		HLClientData* ClientData;
 		DWORD* ForceJump;
+		DWORD* ForceAttack;
 		DWORD* EnableCrosshair;
+		DWORD* SvCheats;
 	}
 }
 
@@ -119,14 +126,24 @@ void Hack::DrawMenu()
 	if (ImGui::BeginMenu("CHEATS"))
 	{
 		ImGui::Checkbox("Bunnyhop", &Data::bBunnyhop);
+		ImGui::Checkbox("Triggerbot", &Data::bTriggerbot);
 		ImGui::Checkbox("Infinite Health", &Data::bInfiniteHealth);
 		ImGui::Checkbox("Infinite Armor", &Data::bInfiniteArmor);
 		if (ImGui::Checkbox("Infinite Ammo", &Data::bNoAmmoDecrease)) Hack::HookDecreaseAmmo();
 		ImGui::Checkbox("Noclip", &Data::bNoClip);
+		ImGui::Checkbox("Server Cheats", &Data::bServerCheats);
 		if (ImGui::Checkbox("Godmode", &Data::bGodmode)) Hack::HookDecreaseHealth();
 		if (ImGui::Checkbox("One Hit Kills", &Data::bOneHitKills)) Hack::HookDecreaseHealth();
 		ImGui::Checkbox("FOV Changer", &Data::bFovChanger);
 		if(Data::bFovChanger) ImGui::SliderInt("FOV", &Data::iNewFov, MIN_FOV, MAX_FOV);
+		ImGui::Checkbox("Teleport", &Data::bTeleport);
+		if (Data::bTeleport)
+		{
+			ImGui::SliderFloat("X", &Data::vTeleportPos.x, MIN_POS, MAX_POS, "%.1f");
+			ImGui::SliderFloat("Y", &Data::vTeleportPos.y, MIN_POS, MAX_POS, "%.1f");
+			ImGui::SliderFloat("Z", &Data::vTeleportPos.z, MIN_POS, MAX_POS, "%.1f");
+			if (ImGui::Button("Force Teleport")) Data::bTeleportPending = true;
+		}
 
 		ImGui::EndMenu();
 	}
@@ -142,6 +159,8 @@ void Hack::Run(LPDIRECT3DDEVICE9 pDevice)
 		Data::server = Memory::In::GetModuleAddress(SERVER_MODULE);
 		if (!Data::client || !Data::engine || !Data::server) return;
 		Data::ForceJump = (DWORD*)(Data::client + HLS::Offsets::Client::dwJump);
+		Data::ForceAttack = (DWORD*)(Data::client + HLS::Offsets::Client::dwAttack);
+		Data::SvCheats = (DWORD*)(Data::engine + HLS::Offsets::Engine::dwServerCheats);
 		Data::CheckPlayerState = (bool*)(Data::client + HLS::Offsets::Client::bCheckPlayerState);
 		Data::Loading = (bool*)(Data::engine + HLS::Offsets::Engine::bLoading);
 		Data::EnableCrosshair = (DWORD*)(Data::client + HLS::Offsets::Client::bEnableCrosshair);
@@ -177,8 +196,11 @@ void Hack::Run(LPDIRECT3DDEVICE9 pDevice)
 	InfiniteHealth();
 	InfiniteArmor();
 	Bunnyhop();
+	Triggerbot();
+	Teleport();
 	NoClip();
 	FovChanger();
+	ServerCheats();
 
 	Data::EntityList = (mem_t)(Data::server + HLS::Offsets::Server::dwEntityList);
 	Data::vMatrix = *(ViewMatrix*)(Data::engine + HLS::Offsets::Engine::dwViewMatrix);
@@ -232,6 +254,27 @@ void Hack::Bunnyhop()
 	}
 }
 
+void Hack::ServerCheats()
+{
+	if (Data::bServerCheats && !*Data::SvCheats)
+	{
+		*Data::SvCheats = 1;
+	}
+
+	else if (!Data::bServerCheats && *Data::SvCheats)
+	{
+		*Data::SvCheats = 0;
+	}
+}
+
+void Hack::Triggerbot()
+{
+	if (Data::bTriggerbot && Data::ClientData->OnTarget)
+	{
+		*Data::ForceAttack = 6;
+	}
+}
+
 void Hack::NoClip()
 {
 	if (Data::bNoClip && Data::LocalPlayer->NoClipState != NOCLIP_STATE_ON)
@@ -242,6 +285,24 @@ void Hack::NoClip()
 	else if (!Data::bNoClip && Data::LocalPlayer->NoClipState != NOCLIP_STATE_OFF)
 	{
 		Data::LocalPlayer->NoClipState = NOCLIP_STATE_OFF;
+	}
+}
+
+void Hack::Teleport()
+{
+	if (Data::bTeleportPending)
+	{
+		Data::LocalPlayer->Position.x = Data::vTeleportPos.x;
+		Data::LocalPlayer->Position.y = Data::vTeleportPos.y;
+		Data::LocalPlayer->Position.z = Data::vTeleportPos.z;
+		Data::bTeleportPending = false;
+	}
+
+	if(!Data::bShowMenu && !Data::bTeleportPending)
+	{
+		Data::vTeleportPos.x = Data::LocalPlayer->Position.x;
+		Data::vTeleportPos.y = Data::LocalPlayer->Position.y;
+		Data::vTeleportPos.z = Data::LocalPlayer->Position.z;
 	}
 }
 

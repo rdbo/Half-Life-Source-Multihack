@@ -26,6 +26,8 @@
 #define MIN_FOV 1
 #define MAX_FOV 90
 #define DEFAULT_FOV 90
+#define MIN_POS -10000
+#define MAX_POS 10000
 #define MAX_VALUE 0x64
 #define NOCLIP_STATE_OFF 131072
 #define NOCLIP_STATE_ON 524288
@@ -38,6 +40,7 @@ namespace HLS
 		{
 			const mem_t dwClientData = 0x432D8C;
 			const mem_t dwJump = 0x4602C4;
+			const mem_t dwAttack = 0x4602D0;
 			const mem_t bCheckPlayerState = 0x458500;
 			const mem_t bEnableCrosshair = 0x45D990;
 
@@ -45,12 +48,14 @@ namespace HLS
 			{
 				const mem_t dwFlags = 0x34C;
 				const mem_t dwFieldOfView = 0xFD0;
+				const mem_t bOnTarget = 0xFD8;
 			}
 		}
 
 		namespace Engine
 		{
 			const mem_t dwViewMatrix = 0x58B4F0;
+			const mem_t dwServerCheats = 0x5F17E8;
 			const mem_t bLoading = 0x58BFFC;
 		}
 
@@ -104,6 +109,7 @@ public:
 	{
 		CREATE_UNION_MEMBER(DWORD, Flags, HLS::Offsets::Client::ClientData::dwFlags);
 		CREATE_UNION_MEMBER(int, FieldOfView, HLS::Offsets::Client::ClientData::dwFieldOfView);
+		CREATE_UNION_MEMBER(bool, OnTarget, HLS::Offsets::Client::ClientData::bOnTarget);
 	};
 };
 
@@ -137,17 +143,21 @@ namespace Hack
 	void HookDecreaseHealth();
 	void HookDecreaseAmmo();
 	void Bunnyhop();
+	void Triggerbot();
 	void NoClip();
+	void Teleport();
 	void InfiniteHealth();
 	void InfiniteArmor();
 	void FovChanger();
 	void DrawCrosshair(Crosshair xhair, LPDIRECT3DDEVICE9 pDevice);
+	void ServerCheats();
 
 	namespace Data
 	{
 		//Menu
 		extern bool bShowMenu;
 		extern bool bBunnyhop;
+		extern bool bTriggerbot;
 		extern bool bEspSnaplines;
 		extern bool bEspLimitedRange;
 		extern bool bEspName;
@@ -165,6 +175,10 @@ namespace Hack
 		extern bool bShowCrosshairSettings;
 		extern bool bFovChanger;
 		extern int iNewFov;
+		extern bool bTeleport;
+		extern bool bTeleportPending;
+		extern bool bServerCheats;
+		extern flVec3 vTeleportPos;
 		extern DrawColor SnaplineColor;
 		extern DrawColor NameColor;
 		extern Crosshair crosshair;
@@ -192,6 +206,8 @@ namespace Hack
 		extern ViewMatrix vMatrix;
 		extern HLClientData* ClientData;
 		extern DWORD* ForceJump;
+		extern DWORD* ForceAttack;
 		extern DWORD* EnableCrosshair;
+		extern DWORD* SvCheats;
 	}
 }
