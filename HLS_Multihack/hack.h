@@ -23,7 +23,12 @@
 #define RELOAD_DECREASE_AMMO_HOOK_LENGTH 6
 #define MIN_ESP_RANGE 100
 #define MAX_ESP_RANGE 2500
+#define MIN_FOV 1
+#define MAX_FOV 90
+#define DEFAULT_FOV 90
 #define MAX_VALUE 0x64
+#define NOCLIP_STATE_OFF 131072
+#define NOCLIP_STATE_ON 524288
 
 namespace HLS
 {
@@ -39,6 +44,7 @@ namespace HLS
 			namespace ClientData
 			{
 				const mem_t dwFlags = 0x34C;
+				const mem_t dwFieldOfView = 0xFD0;
 			}
 		}
 
@@ -68,6 +74,7 @@ namespace HLS
 				const mem_t vflPosition = 0x304;
 				const mem_t dwArmor = 0xD00;
 				const mem_t bDormant = 0x900;
+				const mem_t dwNoClipState = 0x138;
 
 				const mem_t dwLoopDistance = 0x10;
 			}
@@ -86,6 +93,7 @@ public:
 		CREATE_UNION_MEMBER(int, Armor, HLS::Offsets::Server::Entity::dwArmor);
 		CREATE_UNION_MEMBER(flVec3, Position, HLS::Offsets::Server::Entity::vflPosition);
 		CREATE_UNION_MEMBER(bool, Dormant, HLS::Offsets::Server::Entity::bDormant);
+		CREATE_UNION_MEMBER(DWORD, NoClipState, HLS::Offsets::Server::Entity::dwNoClipState);
 	};
 };
 
@@ -95,6 +103,7 @@ public:
 	union
 	{
 		CREATE_UNION_MEMBER(DWORD, Flags, HLS::Offsets::Client::ClientData::dwFlags);
+		CREATE_UNION_MEMBER(int, FieldOfView, HLS::Offsets::Client::ClientData::dwFieldOfView);
 	};
 };
 
@@ -128,8 +137,10 @@ namespace Hack
 	void HookDecreaseHealth();
 	void HookDecreaseAmmo();
 	void Bunnyhop();
+	void NoClip();
 	void InfiniteHealth();
 	void InfiniteArmor();
+	void FovChanger();
 	void DrawCrosshair(Crosshair xhair, LPDIRECT3DDEVICE9 pDevice);
 
 	namespace Data
@@ -146,11 +157,14 @@ namespace Hack
 		extern bool bInfiniteHealth;
 		extern bool bInfiniteArmor;
 		extern bool bNoAmmoDecrease;
+		extern bool bNoClip;
 		extern float flEspRange;
 		extern bool bCustomCrosshair;
 		extern bool bShowNameColor;
 		extern bool bShowSnaplineColor;
 		extern bool bShowCrosshairSettings;
+		extern bool bFovChanger;
+		extern int iNewFov;
 		extern DrawColor SnaplineColor;
 		extern DrawColor NameColor;
 		extern Crosshair crosshair;
@@ -167,7 +181,7 @@ namespace Hack
 		extern mem_t fDecreaseAmmoOthersAddr;
 		extern mem_t fReloadIncreaseClipAmmoAddr;
 		extern mem_t fReloadIncreaseClipAmmoShotgunAddr;
-		extern mem_t fReloadDecreaseAmmo;
+		extern mem_t fReloadDecreaseAmmoAddr;
 		extern HLEntity* LocalPlayer;
 		extern HLEntity* Entity;
 		extern bool* CheckPlayerState;

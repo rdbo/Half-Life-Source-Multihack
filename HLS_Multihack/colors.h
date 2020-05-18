@@ -4,6 +4,7 @@
 #define COLOR_BLACK        ImVec4(0, 0, 0, 1);
 #define COLOR_GRAY         ImVec4(.3f, .3f, .3f, 1.f)
 #define COLOR_GRAY_2       ImVec4(.7f, .7f, .7f, 1.f)
+#define COLOR_GRAY_3       ImVec4(.4f, .3f, .3f, 1.f)
 #define COLOR_DARK_GRAY    ImVec4(.05f, .05f, .05f, 1.f)
 #define COLOR_DARK_GRAY_2  ImVec4(.2f, .2f, .2f, 1.f);
 #define COLOR_DARK_GRAY_3  ImVec4(.01f, .01f, .01f, 1.f);

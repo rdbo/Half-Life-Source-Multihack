@@ -32,6 +32,10 @@ void D3D9::InitImGui(LPDIRECT3DDEVICE9 pDevice)
 	colors[ImGuiCol_Button] = COLOR_DARK_GRAY;
 	colors[ImGuiCol_ButtonHovered] = COLOR_DARK_GRAY_2;
 	colors[ImGuiCol_ButtonActive] = COLOR_GRAY;
+	colors[ImGuiCol_TabHovered] = COLOR_DARK_GRAY;
+	colors[ImGuiCol_Header] = COLOR_DARK_GRAY_2;
+	colors[ImGuiCol_HeaderHovered] = COLOR_GRAY;
+	colors[ImGuiCol_HeaderActive] = COLOR_GRAY_3;
 	colors[ImGuiCol_MenuBarBg] = COLOR_DARK_GRAY_3;
 	colors[ImGuiCol_Border] = COLOR_ORANGE;
 	colors[ImGuiCol_ResizeGrip] = COLOR_DARK_ORANGE;
@@ -53,6 +57,8 @@ long __stdcall D3D9::hkEndScene(LPDIRECT3DDEVICE9 pDevice)
 		init = true;
 	}
 
+	Hack::Run(pDevice);
+
 	ImGui_ImplDX9_NewFrame();
 	ImGui_ImplWin32_NewFrame();
 	ImGui::NewFrame();
@@ -63,9 +69,6 @@ long __stdcall D3D9::hkEndScene(LPDIRECT3DDEVICE9 pDevice)
 	ImGui::EndFrame();
 	ImGui::Render();
 	ImGui_ImplDX9_RenderDrawData(ImGui::GetDrawData());
-
-
-	Hack::Run(pDevice);
 
 	return oEndScene(pDevice); //Restore original EndScene function
 }

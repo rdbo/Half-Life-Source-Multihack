@@ -14,6 +14,7 @@ namespace Hack
 		bool bEspLimitedRange = false;
 		bool bEnableEntityFilter = false;
 		bool bGodmode = false;
+		bool bNoClip = false;
 		bool bOneHitKills = false;
 		bool bInfiniteHealth = false;
 		bool bInfiniteArmor = false;
@@ -22,6 +23,8 @@ namespace Hack
 		bool bShowNameColor = false;
 		bool bShowSnaplineColor = false;
 		bool bShowCrosshairSettings = false;
+		bool bFovChanger = false;
+		int iNewFov = DEFAULT_FOV;
 		float flEspRange = 750;
 		DrawColor SnaplineColor = { 255, 0, 0, 255 };
 		DrawColor NameColor = { 255, 125, 0, 255 };
@@ -118,19 +121,12 @@ void Hack::DrawMenu()
 		ImGui::Checkbox("Bunnyhop", &Data::bBunnyhop);
 		ImGui::Checkbox("Infinite Health", &Data::bInfiniteHealth);
 		ImGui::Checkbox("Infinite Armor", &Data::bInfiniteArmor);
-		if (ImGui::Checkbox("Godmode", &Data::bGodmode))
-		{
-			Hack::HookDecreaseHealth();
-		}
-
-		if (ImGui::Checkbox("One Hit Kills", &Data::bOneHitKills))
-		{
-			Hack::HookDecreaseHealth();
-		}
-		if (ImGui::Checkbox("No Ammo Decrease", &Data::bNoAmmoDecrease))
-		{
-			Hack::HookDecreaseAmmo();
-		}
+		if (ImGui::Checkbox("Infinite Ammo", &Data::bNoAmmoDecrease)) Hack::HookDecreaseAmmo();
+		ImGui::Checkbox("Noclip", &Data::bNoClip);
+		if (ImGui::Checkbox("Godmode", &Data::bGodmode)) Hack::HookDecreaseHealth();
+		if (ImGui::Checkbox("One Hit Kills", &Data::bOneHitKills)) Hack::HookDecreaseHealth();
+		ImGui::Checkbox("FOV Changer", &Data::bFovChanger);
+		if(Data::bFovChanger) ImGui::SliderInt("FOV", &Data::iNewFov, MIN_FOV, MAX_FOV);
 
 		ImGui::EndMenu();
 	}
@@ -175,15 +171,17 @@ void Hack::Run(LPDIRECT3DDEVICE9 pDevice)
 	if (!*Data::CheckPlayerState || *Data::Loading) return;
 	Data::LocalPlayer = *(HLEntity**)(Data::server + HLS::Offsets::Server::dwLocalPlayer);
 	if (!Data::LocalPlayer) return;
+	Data::ClientData = *(HLClientData**)(Data::client + HLS::Offsets::Client::dwClientData);
+	if (!Data::ClientData) return;
 
 	InfiniteHealth();
 	InfiniteArmor();
 	Bunnyhop();
-	DrawCrosshair(Data::crosshair, pDevice);
+	NoClip();
+	FovChanger();
 
 	Data::EntityList = (mem_t)(Data::server + HLS::Offsets::Server::dwEntityList);
 	Data::vMatrix = *(ViewMatrix*)(Data::engine + HLS::Offsets::Engine::dwViewMatrix);
-	Data::ClientData = *(HLClientData**)(Data::client + HLS::Offsets::Client::dwClientData);
 
 	for (size_t i = 0; i < MAX_ENTITIES; i++)
 	{
@@ -202,6 +200,8 @@ void Hack::Run(LPDIRECT3DDEVICE9 pDevice)
 			}
 		}
 	}
+
+	DrawCrosshair(Data::crosshair, pDevice);
 }
 
 void Hack::DrawCrosshair(Crosshair xhair, LPDIRECT3DDEVICE9 pDevice)
@@ -229,6 +229,32 @@ void Hack::Bunnyhop()
 	if (Data::bBunnyhop && Data::KeyHook[KEY_BHOP] == WM_KEYDOWN && Data::ClientData && Data::ClientData->Flags & (1 << 0))
 	{
 		*Data::ForceJump = 6;
+	}
+}
+
+void Hack::NoClip()
+{
+	if (Data::bNoClip && Data::LocalPlayer->NoClipState != NOCLIP_STATE_ON)
+	{
+		Data::LocalPlayer->NoClipState = NOCLIP_STATE_ON;
+	}
+
+	else if (!Data::bNoClip && Data::LocalPlayer->NoClipState != NOCLIP_STATE_OFF)
+	{
+		Data::LocalPlayer->NoClipState = NOCLIP_STATE_OFF;
+	}
+}
+
+void Hack::FovChanger()
+{
+	if (Data::bFovChanger && Data::ClientData->FieldOfView != Data::iNewFov)
+	{
+		Data::ClientData->FieldOfView = Data::iNewFov;
+	}
+
+	else if(!Data::bFovChanger && Data::ClientData->FieldOfView != DEFAULT_FOV)
+	{
+		Data::ClientData->FieldOfView = DEFAULT_FOV;
 	}
 }
 
@@ -300,7 +326,17 @@ void Hack::HookDecreaseAmmo()
 		Memory::In::Hook::Detour((byte_t*)Data::fDecreaseAmmoOthersAddr, (byte_t*)Hack::hkDecreaseAmmoOthers, DECREASE_AMMO_OTHERS_HOOK_LENGTH);
 		Memory::In::Hook::Detour((byte_t*)Data::fReloadIncreaseClipAmmoAddr, (byte_t*)Hack::hkReloadIncreaseClipAmmo, RELOAD_INCREASE_CLIP_AMMO_HOOK_LENGTH);
 		Memory::In::Hook::Detour((byte_t*)Data::fReloadIncreaseClipAmmoShotgunAddr, (byte_t*)Hack::hkReloadIncreaseClipAmmoShotgun, RELOAD_INCREASE_CLIP_AMMO_SHOTGUN_HOOK_LENGTH);
-		//Memory::In::Hook::Detour((byte_t*)Data::fReloadDecreaseAmmo, (byte_t*)Hack::hkReloadDecreaseAmmo, RELOAD_DECREASE_AMMO_HOOK_LENGTH);
+		//Memory::In::Hook::Detour((byte_t*)Data::fReloadDecreaseAmmoAddr, (byte_t*)Hack::hkReloadDecreaseAmmo, RELOAD_DECREASE_AMMO_HOOK_LENGTH);
+	}
+
+	else
+	{
+		Memory::In::Hook::Restore(Data::fDecreaseAmmoAddr);
+		Memory::In::Hook::Restore(Data::fDecreaseAmmoShotgunAddr);
+		Memory::In::Hook::Restore(Data::fDecreaseAmmoOthersAddr);
+		Memory::In::Hook::Restore(Data::fReloadIncreaseClipAmmoAddr);
+		Memory::In::Hook::Restore(Data::fReloadIncreaseClipAmmoShotgunAddr);
+		//Memory::In::Hook::Restore(Data::fReloadDecreaseAmmoAddr);
 	}
 }
 
