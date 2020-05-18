@@ -28,9 +28,13 @@ namespace Hack
 		bool bShowCrosshairSettings = false;
 		bool bFovChanger = false;
 		bool bServerCheats = false;
+		bool bTimescaleChanger = false;
+		float flNewTimescale = DEFAULT_TIMESCALE;
 		int iNewFov = DEFAULT_FOV;
 		flVec3 vTeleportPos = { 0, 0, 0 };
 		float flEspRange = 750;
+		bool bGravityChanger = false;
+		float flNewGravity = DEFAULT_GRAVITY;
 		DrawColor SnaplineColor = { 255, 0, 0, 255 };
 		DrawColor NameColor = { 255, 125, 0, 255 };
 		Crosshair crosshair = { { 0, 0 }, { 125, 255, 0, 255 }, 2, 2, 10 };
@@ -61,6 +65,8 @@ namespace Hack
 		DWORD* ForceAttack;
 		DWORD* EnableCrosshair;
 		DWORD* SvCheats;
+		float* Gravity;
+		float* Timescale;
 	}
 }
 
@@ -131,9 +137,13 @@ void Hack::DrawMenu()
 		ImGui::Checkbox("Infinite Armor", &Data::bInfiniteArmor);
 		if (ImGui::Checkbox("Infinite Ammo", &Data::bNoAmmoDecrease)) Hack::HookDecreaseAmmo();
 		ImGui::Checkbox("Noclip", &Data::bNoClip);
-		ImGui::Checkbox("Server Cheats", &Data::bServerCheats);
 		if (ImGui::Checkbox("Godmode", &Data::bGodmode)) Hack::HookDecreaseHealth();
 		if (ImGui::Checkbox("One Hit Kills", &Data::bOneHitKills)) Hack::HookDecreaseHealth();
+		ImGui::Checkbox("Server Cheats", &Data::bServerCheats);
+		ImGui::Checkbox("Gravity Changer", &Data::bGravityChanger);
+		ImGui::Checkbox("Timescale Changer", &Data::bTimescaleChanger);
+		if(Data::bTimescaleChanger) ImGui::SliderFloat("Timescale", &Data::flNewTimescale, MIN_TIMESCALE, MAX_TIMESCALE, "%1.f");
+		if (Data::bGravityChanger) ImGui::SliderFloat("Gravity", &Data::flNewGravity, MIN_GRAVITY, MAX_GRAVITY, "%10.f");
 		ImGui::Checkbox("FOV Changer", &Data::bFovChanger);
 		if(Data::bFovChanger) ImGui::SliderInt("FOV", &Data::iNewFov, MIN_FOV, MAX_FOV);
 		ImGui::Checkbox("Teleport", &Data::bTeleport);
@@ -161,6 +171,8 @@ void Hack::Run(LPDIRECT3DDEVICE9 pDevice)
 		Data::ForceJump = (DWORD*)(Data::client + HLS::Offsets::Client::dwJump);
 		Data::ForceAttack = (DWORD*)(Data::client + HLS::Offsets::Client::dwAttack);
 		Data::SvCheats = (DWORD*)(Data::engine + HLS::Offsets::Engine::dwServerCheats);
+		Data::Gravity = (float*)(Data::server + HLS::Offsets::Server::flGravity);
+		Data::Timescale = (float*)(Data::engine + HLS::Offsets::Engine::flTimescale);
 		Data::CheckPlayerState = (bool*)(Data::client + HLS::Offsets::Client::bCheckPlayerState);
 		Data::Loading = (bool*)(Data::engine + HLS::Offsets::Engine::bLoading);
 		Data::EnableCrosshair = (DWORD*)(Data::client + HLS::Offsets::Client::bEnableCrosshair);
@@ -193,6 +205,7 @@ void Hack::Run(LPDIRECT3DDEVICE9 pDevice)
 	Data::ClientData = *(HLClientData**)(Data::client + HLS::Offsets::Client::dwClientData);
 	if (!Data::ClientData) return;
 
+	ServerCheatsChecker();
 	InfiniteHealth();
 	InfiniteArmor();
 	Bunnyhop();
@@ -200,6 +213,8 @@ void Hack::Run(LPDIRECT3DDEVICE9 pDevice)
 	Teleport();
 	NoClip();
 	FovChanger();
+	GravityChanger();
+	TimescaleChanger();
 	ServerCheats();
 
 	Data::EntityList = (mem_t)(Data::server + HLS::Offsets::Server::dwEntityList);
@@ -306,6 +321,12 @@ void Hack::Teleport()
 	}
 }
 
+void Hack::ServerCheatsChecker()
+{
+	if (!*Data::SvCheats && Data::bTimescaleChanger)
+		Data::bServerCheats = true;
+}
+
 void Hack::FovChanger()
 {
 	if (Data::bFovChanger && Data::ClientData->FieldOfView != Data::iNewFov)
@@ -316,6 +337,32 @@ void Hack::FovChanger()
 	else if(!Data::bFovChanger && Data::ClientData->FieldOfView != DEFAULT_FOV)
 	{
 		Data::ClientData->FieldOfView = DEFAULT_FOV;
+	}
+}
+
+void Hack::GravityChanger()
+{
+	if (Data::bGravityChanger && *Data::Gravity != Data::flNewGravity)
+	{
+		*Data::Gravity = Data::flNewGravity;
+	}
+
+	else if (!Data::bGravityChanger && *Data::Gravity != DEFAULT_GRAVITY)
+	{
+		*Data::Gravity = DEFAULT_GRAVITY;
+	}
+}
+
+void Hack::TimescaleChanger()
+{
+	if (Data::bTimescaleChanger && *Data::Timescale != Data::flNewTimescale)
+	{
+		*Data::Timescale = Data::flNewTimescale;
+	}
+
+	else if (!Data::bTimescaleChanger && *Data::Timescale != DEFAULT_TIMESCALE)
+	{
+		*Data::Timescale = DEFAULT_TIMESCALE;
 	}
 }
 

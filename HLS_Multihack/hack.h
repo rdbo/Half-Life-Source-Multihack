@@ -25,7 +25,13 @@
 #define MAX_ESP_RANGE 2500
 #define MIN_FOV 1
 #define MAX_FOV 90
+#define MIN_TIMESCALE 1
+#define MAX_TIMESCALE 100
 #define DEFAULT_FOV 90
+#define MIN_GRAVITY 0
+#define MAX_GRAVITY 10000
+#define DEFAULT_GRAVITY 800
+#define DEFAULT_TIMESCALE 1
 #define MIN_POS -10000
 #define MAX_POS 10000
 #define MAX_VALUE 0x64
@@ -57,6 +63,7 @@ namespace HLS
 			const mem_t dwViewMatrix = 0x58B4F0;
 			const mem_t dwServerCheats = 0x5F17E8;
 			const mem_t bLoading = 0x58BFFC;
+			const mem_t flTimescale = 0x611F84;
 		}
 
 		namespace Server
@@ -70,6 +77,7 @@ namespace HLS
 			const mem_t fReloadIncreaseClipAmmo = 0xD383A;
 			const mem_t fReloadIncreaseClipAmmoShotgun = 0x2C6D18;
 			const mem_t fReloadDecreaseAmmo = 0xD0EC4;
+			const mem_t flGravity = 0x4CA80C;
 
 			namespace Entity
 			{
@@ -142,6 +150,7 @@ namespace Hack
 	bool FilterEntity(HLEntity* ent);
 	void HookDecreaseHealth();
 	void HookDecreaseAmmo();
+	void ServerCheatsChecker();
 	void Bunnyhop();
 	void Triggerbot();
 	void NoClip();
@@ -149,6 +158,8 @@ namespace Hack
 	void InfiniteHealth();
 	void InfiniteArmor();
 	void FovChanger();
+	void GravityChanger();
+	void TimescaleChanger();
 	void DrawCrosshair(Crosshair xhair, LPDIRECT3DDEVICE9 pDevice);
 	void ServerCheats();
 
@@ -178,6 +189,10 @@ namespace Hack
 		extern bool bTeleport;
 		extern bool bTeleportPending;
 		extern bool bServerCheats;
+		extern bool bGravityChanger;
+		extern float flNewGravity;
+		extern bool bTimescaleChanger;
+		extern float flNewTimescale;
 		extern flVec3 vTeleportPos;
 		extern DrawColor SnaplineColor;
 		extern DrawColor NameColor;
@@ -209,5 +224,7 @@ namespace Hack
 		extern DWORD* ForceAttack;
 		extern DWORD* EnableCrosshair;
 		extern DWORD* SvCheats;
+		extern float* Gravity;
+		extern float* Timescale;
 	}
 }
