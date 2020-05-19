@@ -137,7 +137,7 @@ void Hack::DrawMenu(LPDIRECT3DDEVICE9 pDevice)
 	if (ImGui::BeginMenu("CROSSHAIR"))
 	{
 		ImGui::Checkbox("Enable Custom Crosshair", &Data::bCustomCrosshair);
-		ImGui::Checkbox("Show Crosshair Properties", &Data::bShowCrosshairSettings);
+		ImGui::Checkbox("Show Crosshair Settings", &Data::bShowCrosshairSettings);
 		if (Data::bShowCrosshairSettings)
 		{
 			ImGui::SliderInt("Crosshair Thickness", &Data::crosshair.Thickness, 0, Data::wnd.GetWidth());
