@@ -11,9 +11,13 @@ namespace Hack
 		bool bBunnyhop = false;
 		bool bTriggerbot = false;
 		bool bEspSnaplines = false;
+		int iSnaplineThickness = 2;
 		bool bEspName = false;
+		int iNameSize = FONT_SIZE;
 		bool bEspLimitedRange = false;
 		bool bEnableEntityFilter = false;
+		int iNameDist = NAME_DIST;
+		bool bEspDist = false;
 		bool bGodmode = false;
 		bool bNoClip = false;
 		bool bOneHitKills = false;
@@ -29,6 +33,7 @@ namespace Hack
 		bool bFovChanger = false;
 		bool bServerCheats = false;
 		bool bTimescaleChanger = false;
+		char strNameFont[MAX_PATH] = FONT_NAME;
 		float flNewTimescale = DEFAULT_TIMESCALE;
 		int iNewFov = DEFAULT_FOV;
 		flVec3 vTeleportPos = { 0, 0, 0 };
@@ -78,7 +83,7 @@ mem_t ReloadIncClipAmmoJumpAddr;
 mem_t ReloadIncClipAmmoShotgunJumpAddr;
 mem_t ReloadDecAmmoJumpAddr;
 
-void Hack::DrawMenu()
+void Hack::DrawMenu(LPDIRECT3DDEVICE9 pDevice)
 {
 	ImGui::BeginMainMenuBar();
 	if (ImGui::BeginMenu("ESP"))
@@ -92,18 +97,35 @@ void Hack::DrawMenu()
 			ImGui::SliderFloat("ESP Range", &Data::flEspRange, MIN_ESP_RANGE, MAX_ESP_RANGE, "%1.f");
 		}
 
-		ImGui::Checkbox("Show Snapline Color Properties", &Data::bShowSnaplineColor);
+		ImGui::Checkbox("Show Snapline Settings", &Data::bShowSnaplineColor);
 		if (Data::bShowSnaplineColor)
 		{
+			ImGui::SliderInt("ESP Snaline Thickness", &Data::iSnaplineThickness, ESP_THICKNESS_MIN, ESP_THICKNESS_MAX);
 			ImGui::SliderInt("ESP Snapline R", &Data::SnaplineColor.r, 0, 255);
 			ImGui::SliderInt("ESP Snapline G", &Data::SnaplineColor.g, 0, 255);
 			ImGui::SliderInt("ESP Snapline B", &Data::SnaplineColor.b, 0, 255);
 			ImGui::SliderInt("ESP Snapline A", &Data::SnaplineColor.a, 0, 255);
 		}
 
-		ImGui::Checkbox("Show Name Color Properties", &Data::bShowNameColor);
+		ImGui::Checkbox("Show Name Settings", &Data::bShowNameColor);
 		if (Data::bShowNameColor)
 		{
+			ImGui::Checkbox("ESP Dist", &Data::bEspDist);
+
+			if (ImGui::InputText("Font Name", Data::strNameFont, sizeof(Data::strNameFont)) && D3D9::dxFont)
+			{
+				D3D9::dxFont->Release();
+				D3DXCreateFontA(pDevice, Data::iNameSize, 0, FW_REGULAR, 0, FALSE, DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, DEFAULT_QUALITY, DEFAULT_PITCH | FF_DONTCARE, Data::strNameFont, &D3D9::dxFont);
+			}
+
+			if (ImGui::SliderInt("Font Size", &Data::iNameSize, FONT_MIN_SIZE, FONT_MAX_SIZE) && D3D9::dxFont)
+			{
+				D3D9::dxFont->Release();
+				D3DXCreateFontA(pDevice, Data::iNameSize, 0, FW_REGULAR, 0, FALSE, DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, DEFAULT_QUALITY, DEFAULT_PITCH | FF_DONTCARE, Data::strNameFont, &D3D9::dxFont);
+			}
+
+			ImGui::SliderInt("Name Distance", &Data::iNameDist, NAME_DIST_MIN, NAME_DIST_MAX);
+
 			ImGui::SliderInt("ESP Name R", &Data::NameColor.r, 0, 255);
 			ImGui::SliderInt("ESP Name G", &Data::NameColor.g, 0, 255);
 			ImGui::SliderInt("ESP Name B", &Data::NameColor.b, 0, 255);
@@ -198,7 +220,7 @@ void Hack::Run(LPDIRECT3DDEVICE9 pDevice)
 		ReloadIncClipAmmoShotgunJumpAddr = Data::fReloadIncreaseClipAmmoShotgunAddr + RELOAD_INCREASE_CLIP_AMMO_SHOTGUN_HOOK_LENGTH;
 		ReloadDecAmmoJumpAddr = Data::fReloadDecreaseAmmo + RELOAD_DECREASE_AMMO_HOOK_LENGTH;
 
-		D3DXCreateFont(pDevice, FONT_SIZE, 0, FW_REGULAR, 0, FALSE, DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, DEFAULT_QUALITY, DEFAULT_PITCH | FF_DONTCARE, FONT_NAME, &D3D9::dxFont);
+		D3DXCreateFontA(pDevice, Data::iNameSize, 0, FW_REGULAR, 0, FALSE, DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, DEFAULT_QUALITY, DEFAULT_PITCH | FF_DONTCARE, Data::strNameFont, &D3D9::dxFont);
 		Data::bInitialized = true;
 	}
 
@@ -592,7 +614,7 @@ void Hack::ESP_Snaplines(HLEntity* ent, iVec2 Ent2DPos, LPDIRECT3DDEVICE9 pDevic
 		int wHeight = wnd.GetHeight();
 		iVec2 screenCoords = { wWidth / 2, wHeight };
 
-		D3D9::DrawLine(screenCoords, Ent2DPos, 2, Data::SnaplineColor.GetColorD3D(), pDevice);
+		D3D9::DrawLine(screenCoords, Ent2DPos, Data::iSnaplineThickness, Data::SnaplineColor.GetColorD3D(), pDevice);
 	}
 }
 
@@ -600,6 +622,20 @@ void Hack::ESP_Name(HLEntity* ent, iVec2 Ent2DPos, LPDIRECT3DDEVICE9 pDevice)
 {
 	if (Data::bEspName && D3D9::dxFont)
 	{
-		D3D9::DrawString(ent->EntityTypeStr, Ent2DPos.x, Ent2DPos.y, Data::NameColor.GetColorD3D(), D3D9::dxFont);
+		std::string str = ent->EntityTypeStr;
+
+		if (Data::bEspDist)
+		{
+			float dist = D3D9::Get3DDistance(Data::LocalPlayer->Position, ent->Position);
+			char dist_buf[128];
+			snprintf(dist_buf, sizeof(dist_buf), "%.2f", dist);
+
+			str += "[";
+			str += dist_buf;
+			str += "M";
+			str += "]";
+		}
+
+		D3D9::DrawString(str.c_str(), Ent2DPos.x, Ent2DPos.y, Data::iNameDist, Data::NameColor.GetColorD3D(), D3D9::dxFont);
 	}
 }

@@ -63,7 +63,7 @@ long __stdcall D3D9::hkEndScene(LPDIRECT3DDEVICE9 pDevice)
 	ImGui::NewFrame();
 
 	if(Hack::Data::bShowMenu)
-		Hack::DrawMenu();
+		Hack::DrawMenu(pDevice);
 
 	ImGui::EndFrame();
 	ImGui::Render();

@@ -96,15 +96,15 @@ void D3D9::DrawLine(iVec2 src, iVec2 dst, int thickness, D3DCOLOR color, LPDIREC
 	dxLine->Draw(Line, 2, color);
 }
 
-void D3D9::DrawString(LPCSTR text, int x, int y, D3DCOLOR color, LPD3DXFONT pFont)
+void D3D9::DrawString(LPCSTR text, int x, int y, size_t dist, D3DCOLOR color, LPD3DXFONT pFont)
 {
 	RECT rect;
 	pFont->DrawTextA(NULL, text, strlen(text), &rect, DT_CALCRECT, D3DCOLOR_XRGB(0, 0, 0));
 	int size = rect.right -= rect.left;
 	rect.left = x - size / 2;
 	rect.right = x + size / 2;
-	rect.top = y - size / 4;
-	rect.bottom = y + ((size / 4) * 3);
+	rect.top = y - dist;
+	rect.bottom = rect.top + size;
 	pFont->DrawTextA(NULL, text, -1, &rect, DT_NOCLIP, color);
 }
 

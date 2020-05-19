@@ -8,10 +8,12 @@
 #define CLIENT_MODULE AUTO_STR("client.dll")
 #define ENGINE_MODULE AUTO_STR("engine.dll")
 #define SERVER_MODULE AUTO_STR("server.dll")
-#define FONT_NAME AUTO_STR("Consolas")
-#define CFONT_NAME "Consolas"
+#define FONT_NAME "Consolas"
 #define FONT_SIZE 14
+#define FONT_MIN_SIZE 1
+#define FONT_MAX_SIZE 32
 #define MAX_ENTITIES 1024
+#define NAME_DIST 25
 #define BLACKLISTED_ENTITIES (char*)"monster_cockroach"
 #define LOCALPLAYER_TYPE_ID 5
 #define DECREASE_HEALTH_HOOK_LENGTH 8
@@ -21,6 +23,10 @@
 #define RELOAD_INCREASE_CLIP_AMMO_HOOK_LENGTH 5
 #define RELOAD_INCREASE_CLIP_AMMO_SHOTGUN_HOOK_LENGTH 6
 #define RELOAD_DECREASE_AMMO_HOOK_LENGTH 6
+#define NAME_DIST_MIN 0
+#define NAME_DIST_MAX 100
+#define ESP_THICKNESS_MIN 1
+#define ESP_THICKNESS_MAX 10
 #define MIN_ESP_RANGE 100
 #define MAX_ESP_RANGE 2500
 #define STATE_OFF 4
@@ -138,7 +144,7 @@ typedef struct { float Matrix[4][4]; } ViewMatrix;
 namespace Hack
 {
 	void Run(LPDIRECT3DDEVICE9 pDevice);
-	void DrawMenu();
+	void DrawMenu(LPDIRECT3DDEVICE9 pDevice);
 	void hkDecreaseHealth();
 	void hkDecreaseAmmo();
 	void hkDecreaseAmmoShotgun();
@@ -172,8 +178,12 @@ namespace Hack
 		extern bool bBunnyhop;
 		extern bool bTriggerbot;
 		extern bool bEspSnaplines;
+		extern bool bEspDist;
+		extern int iSnaplineThickness;
 		extern bool bEspLimitedRange;
 		extern bool bEspName;
+		extern int iNameSize;
+		extern char strNameFont[MAX_PATH];
 		extern bool bEnableEntityFilter;
 		extern bool bGodmode;
 		extern bool bOneHitKills;
@@ -182,6 +192,7 @@ namespace Hack
 		extern bool bNoAmmoDecrease;
 		extern bool bNoClip;
 		extern float flEspRange;
+		extern int iNameDist;
 		extern bool bCustomCrosshair;
 		extern bool bShowNameColor;
 		extern bool bShowSnaplineColor;

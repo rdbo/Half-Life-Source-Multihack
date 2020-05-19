@@ -68,7 +68,7 @@ namespace D3D9
 	bool CreateDummyDevice(void** vtable, size_t size);
 	long __stdcall hkEndScene(LPDIRECT3DDEVICE9 pDevice);
 	void DrawLine(iVec2 src, iVec2 dst, int thickness, D3DCOLOR color, LPDIRECT3DDEVICE9 pDevice);
-	void DrawString(LPCSTR text, int x, int y, D3DCOLOR color, LPD3DXFONT pFont);
+	void DrawString(LPCSTR text, int x, int y, size_t dist, D3DCOLOR color, LPD3DXFONT pFont);
 	bool WorldToScreen(flVec3 pos, iVec2& screen, float viewMatrix[4][4], int windowWidth, int windowHeight);
 	float Get3DDistance(flVec3 src, flVec3 dst);
 }
