@@ -2,7 +2,6 @@
 #include "d3d9.h"
 #include "hook.h"
 #include "hack.h"
-#include "colors.h"
 
 void D3D9::InitImGui(LPDIRECT3DDEVICE9 pDevice)
 {

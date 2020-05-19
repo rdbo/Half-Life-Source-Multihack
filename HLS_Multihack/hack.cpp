@@ -141,9 +141,9 @@ void Hack::DrawMenu()
 		if (ImGui::Checkbox("One Hit Kills", &Data::bOneHitKills)) Hack::HookDecreaseHealth();
 		ImGui::Checkbox("Server Cheats", &Data::bServerCheats);
 		ImGui::Checkbox("Gravity Changer", &Data::bGravityChanger);
+		if (Data::bGravityChanger) ImGui::SliderFloat("Gravity", &Data::flNewGravity, MIN_GRAVITY, MAX_GRAVITY, "%10.f");
 		ImGui::Checkbox("Timescale Changer", &Data::bTimescaleChanger);
 		if(Data::bTimescaleChanger) ImGui::SliderFloat("Timescale", &Data::flNewTimescale, MIN_TIMESCALE, MAX_TIMESCALE, "%1.f");
-		if (Data::bGravityChanger) ImGui::SliderFloat("Gravity", &Data::flNewGravity, MIN_GRAVITY, MAX_GRAVITY, "%10.f");
 		ImGui::Checkbox("FOV Changer", &Data::bFovChanger);
 		if(Data::bFovChanger) ImGui::SliderInt("FOV", &Data::iNewFov, MIN_FOV, MAX_FOV);
 		ImGui::Checkbox("Teleport", &Data::bTeleport);
@@ -155,6 +155,13 @@ void Hack::DrawMenu()
 			if (ImGui::Button("Force Teleport")) Data::bTeleportPending = true;
 		}
 
+		ImGui::EndMenu();
+	}
+
+	if (ImGui::BeginMenu("ABOUT"))
+	{
+		ImGui::TextColored(COLOR_ORANGE_TXT, "This multihack was made by rdbo");
+		ImGui::TextColored(COLOR_BLUE_TXT, "https://github.com/rdbo");
 		ImGui::EndMenu();
 	}
 	ImGui::EndMainMenuBar();
@@ -286,7 +293,7 @@ void Hack::Triggerbot()
 {
 	if (Data::bTriggerbot && Data::ClientData->OnTarget)
 	{
-		*Data::ForceAttack = 6;
+		*Data::ForceAttack = STATE_ON;
 	}
 }
 

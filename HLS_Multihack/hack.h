@@ -23,6 +23,8 @@
 #define RELOAD_DECREASE_AMMO_HOOK_LENGTH 6
 #define MIN_ESP_RANGE 100
 #define MAX_ESP_RANGE 2500
+#define STATE_OFF 4
+#define STATE_ON 6
 #define MIN_FOV 1
 #define MAX_FOV 90
 #define MIN_TIMESCALE 1
